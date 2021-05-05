@@ -9,7 +9,7 @@
         icon="settings"
         :done="step > 1"
       >
-        <q-form>
+        <q-form ref="questionCreationFormGeneral">
           <q-input
             dark
             label="Intitulé"
@@ -68,46 +68,48 @@
         :done="step > 2"
       >
         <div>
-          <q-item v-for="(x, index) in newQuestion.answers" :key="index">
-            <q-item-section avatar>
-              <q-checkbox
-                dark
-                v-model="newQuestion.answers[index].isCorrect"
-                color="positive"
-              />
-            </q-item-section>
-            <q-item-section>
-              <q-input
-                dark
-                filled
-                v-model="newQuestion.answers[index].value"
-                label="Réponse"
-                label-color="primary"
-                class="bg-secondary"
-                :rules="[
-                  value =>
-                    value.length > 0 ||
-                    'Veuillez entrer du texte ou supprimer le champs'
-                ]"
-              />
-            </q-item-section>
-            <q-item-section side>
-              <q-btn
-                flat
-                color="negative"
-                icon="fas fa-times"
-                @click="removeField(index)"
-                v-if="newQuestion.answers.length > 2"
-              />
-            </q-item-section>
-          </q-item>
+          <q-form ref="questionCreationFormAnswers">
+            <q-item v-for="(x, index) in newQuestion.answers" :key="index">
+              <q-item-section avatar>
+                <q-checkbox
+                  dark
+                  v-model="newQuestion.answers[index].isCorrect"
+                  color="positive"
+                />
+              </q-item-section>
+              <q-item-section>
+                <q-input
+                  dark
+                  filled
+                  v-model="newQuestion.answers[index].value"
+                  label="Réponse"
+                  label-color="primary"
+                  class="bg-secondary"
+                  :rules="[
+                    value =>
+                      value.length > 0 ||
+                      'Veuillez entrer du texte ou supprimer le champs'
+                  ]"
+                />
+              </q-item-section>
+              <q-item-section side>
+                <q-btn
+                  flat
+                  color="negative"
+                  icon="fas fa-times"
+                  @click="removeField(index)"
+                  v-if="newQuestion.answers.length > 2"
+                />
+              </q-item-section>
+            </q-item>
 
-          <q-btn
-            v-if="newQuestion.answers.length < 4"
-            color="primary"
-            label="+"
-            @click="addField"
-          />
+            <q-btn
+              v-if="newQuestion.answers.length < 4"
+              color="primary"
+              label="+"
+              @click="addField"
+            />
+          </q-form>
         </div>
       </q-step>
 
@@ -146,8 +148,9 @@
       <template v-slot:navigation>
         <q-stepper-navigation>
           <q-btn
-            @click="$refs.stepper.next()"
+            @click="nextStep()"
             color="primary"
+            :disable="canMoveToNextStep"
             :label="step === 3 ? 'Envoyer' : 'Suivant'"
           />
           <q-btn
@@ -168,7 +171,8 @@
 export default {
   data() {
     return {
-      step: 1
+      step: 1,
+      canMoveToNextStep: false
     };
   },
   methods: {
@@ -182,6 +186,43 @@ export default {
     },
     removeField(index) {
       this.newQuestion.answers.splice(index, 1);
+    },
+    nextStep() {
+      if (this.step != 3) {
+        let formPart = ";";
+        switch (this.step) {
+          case 1:
+            formPart = this.$refs.questionCreationFormGeneral;
+            break;
+          case 2:
+            formPart = this.$refs.questionCreationFormAnswers;
+            break;
+        }
+
+        formPart.validate().then(success => {
+          if (success) {
+            this.$refs.stepper.next();
+          }
+        });
+      } else {
+        this.endStepper();
+      }
+    },
+    endStepper() {
+      this.createQuestion();
+      this.clearStepper();
+    },
+    createQuestion() {},
+    clearStepper() {
+      this.newQuestion = {
+        title: "",
+        category: "",
+        allowedTime: 5,
+        answers: [
+          { value: "", isCorrect: "false" },
+          { value: "", isCorrect: "false" }
+        ]
+      };
     }
   },
   computed: {

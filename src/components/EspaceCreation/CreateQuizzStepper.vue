@@ -11,34 +11,181 @@
     >
       <q-step
         :name="1"
-        title="Composer une liste de questions"
-        icon="settings"
+        title="Composer la liste des questions"
+        icon="create_new_folder"
         :done="step > 1"
       >
-        For each ad campaign that you create, you can control how much you're
-        willing to spend on clicks and conversions, which networks and
-        geographical locations you want your ads to show on, and more.
+        <q-card dark class="question-picker q-mb-sm">
+          <q-tabs
+            v-model="tab"
+            dense
+            active-color="primary"
+            indicator-color="primary"
+            align="justify"
+            narrow-indicator
+          >
+            <q-tab name="list" label="Base de données" icon="fas fa-database" />
+
+            <q-tab name="new" label="Nouvelle question" icon="fas fa-pen" />
+            <q-tab
+              v-if="selectedQuestions.length > 0"
+              name="selection"
+              label="Votre selection"
+              icon="fas fa-check-square"
+            />
+          </q-tabs>
+
+          <q-separator />
+
+          <q-tab-panels dark v-model="tab" animated>
+            <q-tab-panel name="list">
+              <div class="text-h6 q-mb-md">
+                Choisir des questions à partir de la base de données
+              </div>
+              <q-list dark bordered separator>
+                <QuestionPickerItem
+                  v-for="question in questions"
+                  :key="question.id"
+                  :question="question"
+                  :isSelected="isQuestionSelected(question)"
+                  @clicked="toggleQuestionSelection(question)"
+                />
+              </q-list>
+            </q-tab-panel>
+
+            <q-tab-panel name="new">
+              <CreateQuestionStepper />
+            </q-tab-panel>
+            <q-tab-panel name="selection">
+              <q-list dark bordered separator>
+                <QuestionPickerItem
+                  v-for="selectedQuestion in selectedQuestions"
+                  :key="selectedQuestion.id"
+                  :question="selectedQuestion"
+                  v-bind:isSelected="isQuestionSelected(selectedQuestion)"
+                  @clicked="toggleQuestionSelection(selectedQuestion)"
+                />
+              </q-list>
+            </q-tab-panel>
+          </q-tab-panels>
+        </q-card>
+
+        <div class="bg-secondary q-pa-md" v-if="selectedQuestions.length > 0">
+          <h6 class="q-mt-none q-mb-sm">Recapitulatif</h6>
+          <div>
+            <q-chip
+              square
+              color="positive"
+              text-color="white"
+              icon="fas fa-hourglass-half"
+            >
+              Durée maximum
+            </q-chip>
+            <span> {{ selectedQuestionsTimeSum }} secondes </span>
+          </div>
+          <div>
+            <q-chip square color="orange" text-color="white">
+              Liste de questions
+            </q-chip>
+            <ul>
+              <li
+                style="list-style-type:none"
+                v-for="(selectedQuestion, index) in selectedQuestions"
+                :key="selectedQuestion.id"
+              >
+                {{ index + 1 }} - {{ selectedQuestion.title }}
+              </li>
+            </ul>
+          </div>
+        </div>
       </q-step>
 
       <q-step
         :name="2"
-        title=""
-        caption="Informations générales et description"
+        title="Informations générales et description"
         icon="create_new_folder"
         :done="step > 2"
       >
-        An ad group contains one or more ads which target a shared set of
-        keywords.
+        <q-form ref="quizzCreationFormGeneral">
+          <q-input
+            dark
+            label="Intitulé"
+            standout="bg-dark"
+            v-model="newQuizz.title"
+            label-color="primary"
+            class="q-mb-sm bg-secondary"
+            :rules="[
+              val =>
+                val.length >= 5 ||
+                'L\'intitulé doit avoir au moins 5 caractères'
+            ]"
+          >
+            <template v-slot:prepend>
+              <q-icon color="primary" name="fas fa-heading" />
+            </template>
+          </q-input>
+
+          <q-input
+            type="textarea"
+            dark
+            label="Description"
+            standout="bg-dark"
+            v-model="newQuizz.description"
+            label-color="primary"
+            class="q-mb-sm bg-secondary"
+            :rules="[
+              val =>
+                val.length <= 500 ||
+                'La description doit avoir 300 caractères maximum'
+            ]"
+          >
+            <template v-slot:prepend>
+              <q-icon color="primary" name="fas fa-heading" />
+            </template>
+          </q-input>
+          <q-select
+            dark
+            label="Categories"
+            filled
+            v-model="newQuizz.category"
+            :options="availableCategories"
+            class="q-mb-sm bg-secondary"
+            label-color="primary"
+          >
+            <template v-slot:prepend>
+              <q-icon color="primary" name="fas fa-tag" />
+            </template>
+          </q-select>
+        </q-form>
       </q-step>
 
-      <q-step :name="3" title="Envoyer en validation" icon="assignment" disable>
-        This step won't show up because it is disabled.
+      <q-step :name="3" title="Envoyer en validation" icon="assignment">
+        La question va maintenant être envoyer à l'équipe de validation dans
+        l'état. Vérifiez une dernière fois et appuyez sur le bouton envoyer.
+
+        <div class="bg-secondary q-pa-md q-mt-sm">
+          <h6 class="q-mb-sm q-mt-sm">
+            {{ newQuizz.title }}
+          </h6>
+
+          <ul>
+            <li v-for="question in newQuizz.questions" :key="question.id">
+              {{ question.title }}
+            </li>
+          </ul>
+          <hr />
+          <ul>
+            <li>
+              <b>Durée maximum </b>: {{ selectedQuestionsTimeSum }} secondes
+            </li>
+          </ul>
+        </div>
       </q-step>
 
       <template v-slot:navigation>
         <q-stepper-navigation>
           <q-btn
-            @click="$refs.stepper.next()"
+            @click="nextStep()"
             color="primary"
             :label="step === 4 ? 'Finish' : 'Continue'"
           />
@@ -57,18 +204,86 @@
 </template>
 
 <script>
+import CreateQuestionStepper from "./CreateQuestionStepper";
+import QuestionPickerItem from "./QuestionPickerItem";
 export default {
+  components: {
+    CreateQuestionStepper,
+    QuestionPickerItem
+  },
   data() {
-    return {};
+    return {
+      step: 1,
+      tab: 1,
+      selectedQuestions: []
+    };
   },
   computed: {
-    step: {
+    newQuizz: {
       get() {
-        return this.$store.quizzes.state.step;
+        return this.$store.state.quizzes.newQuizz;
+      },
+      set(value) {
+        this.$store.commit("quizzes/updateNewQuizz", value);
       }
+    },
+    questions: {
+      get() {
+        return this.$store.state.questions.questionsList;
+      }
+    },
+    availableCategories: {
+      get() {
+        return this.$store.state.quizzes.categories;
+      }
+    },
+
+    selectedQuestionsTimeSum() {
+      return this.selectedQuestions.reduce(
+        (n, { allowedTime }) => n + allowedTime,
+        0
+      );
+    }
+  },
+  methods: {
+    nextStep() {
+      // si on a au moins une question de selectionné durant l'étape 1
+      if (step === 1 && selectedQuestions.length > 0) {
+        $refs.stepper.next();
+      }
+      if (step === 2) {
+        $refs.quizzCreationFormGeneral.validate().then(success => {
+          if (success) {
+            $refs.stepper.next();
+          }
+        });
+      }
+
+      if (step === 3) {
+        endStepper();
+      }
+    },
+    endStepper() {
+      console.log(newQuizz);
+    },
+
+    toggleQuestionSelection(question) {
+      let index = this.selectedQuestions.indexOf(question);
+      if (index === -1) {
+        this.selectedQuestions.push(question);
+      } else {
+        this.selectedQuestions.splice(index, 1);
+      }
+    },
+    isQuestionSelected(question) {
+      return this.selectedQuestions.indexOf(question) != -1;
     }
   }
 };
 </script>
 
-<style></style>
+<style>
+.question-picker {
+  height: 520px;
+}
+</style>

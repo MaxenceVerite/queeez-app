@@ -3,14 +3,15 @@ import Vuex from "vuex";
 
 // we first import the module
 import questions from "./questions";
-
+import quizzes from "./quizzes";
 Vue.use(Vuex);
 
 export default function(/* { ssrContext } */) {
   const Store = new Vuex.Store({
     modules: {
       // then we reference it
-      questions
+      questions,
+      quizzes
     },
 
     // enable strict mode (adds overhead!)
