@@ -66,6 +66,7 @@ export default function() {
       }
     ],
     newQuestion: {
+      id: "",
       title: "",
       category: "",
       allowedTime: 5,

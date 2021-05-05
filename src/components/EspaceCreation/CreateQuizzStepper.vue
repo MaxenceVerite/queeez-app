@@ -1,14 +1,7 @@
 <template>
   <div class="q-pa-md">
     <h6 class="q-ma-sm">Création d'un quizz</h6>
-    <q-stepper
-      class="bg-dark"
-      dark
-      v-model="step"
-      ref="stepper"
-      color="primary"
-      animated
-    >
+    <q-stepper class="bg-dark" dark v-model="step" ref="stepper" animated>
       <q-step
         :name="1"
         title="Composer la liste des questions"
@@ -23,6 +16,8 @@
             indicator-color="primary"
             align="justify"
             narrow-indicator
+            mobile-arrows
+            outside-arrows
           >
             <q-tab name="list" label="Base de données" icon="fas fa-database" />
 
@@ -54,10 +49,10 @@
             </q-tab-panel>
 
             <q-tab-panel name="new">
-              <CreateQuestionStepper />
+              <CreateQuestionStepper @completed="toggleQuestionSelection" />
             </q-tab-panel>
             <q-tab-panel name="selection">
-              <q-list dark bordered separator>
+              <q-list dark bordered separator class="q-mb-md">
                 <QuestionPickerItem
                   v-for="selectedQuestion in selectedQuestions"
                   :key="selectedQuestion.id"
@@ -66,38 +61,31 @@
                   @clicked="toggleQuestionSelection(selectedQuestion)"
                 />
               </q-list>
+
+              <div class="bg-secondary q-pa-md">
+                <h6 class="q-mt-none q-mb-sm">Recapitulatif</h6>
+                <div>
+                  <q-chip square color="primary" text-color="white">
+                    Nombre de questions
+                  </q-chip>
+                  <span> {{ selectedQuestions.length }} </span>
+                </div>
+
+                <div>
+                  <q-chip
+                    square
+                    color="positive"
+                    text-color="white"
+                    icon="fas fa-hourglass-half"
+                  >
+                    Durée maximum
+                  </q-chip>
+                  <span> {{ selectedQuestionsTimeSum }} secondes </span>
+                </div>
+              </div>
             </q-tab-panel>
           </q-tab-panels>
         </q-card>
-
-        <div class="bg-secondary q-pa-md" v-if="selectedQuestions.length > 0">
-          <h6 class="q-mt-none q-mb-sm">Recapitulatif</h6>
-          <div>
-            <q-chip
-              square
-              color="positive"
-              text-color="white"
-              icon="fas fa-hourglass-half"
-            >
-              Durée maximum
-            </q-chip>
-            <span> {{ selectedQuestionsTimeSum }} secondes </span>
-          </div>
-          <div>
-            <q-chip square color="orange" text-color="white">
-              Liste de questions
-            </q-chip>
-            <ul>
-              <li
-                style="list-style-type:none"
-                v-for="(selectedQuestion, index) in selectedQuestions"
-                :key="selectedQuestion.id"
-              >
-                {{ index + 1 }} - {{ selectedQuestion.title }}
-              </li>
-            </ul>
-          </div>
-        </div>
       </q-step>
 
       <q-step
@@ -248,10 +236,11 @@ export default {
   methods: {
     nextStep() {
       // si on a au moins une question de selectionné durant l'étape 1
-      if (step === 1 && selectedQuestions.length > 0) {
+      if (this.step === 1 && this.selectedQuestions.length > 0) {
         $refs.stepper.next();
       }
-      if (step === 2) {
+      // pour l'étape 2, on applique juste la validation sur les champs du formulaire
+      if (this.step === 2) {
         $refs.quizzCreationFormGeneral.validate().then(success => {
           if (success) {
             $refs.stepper.next();
@@ -259,12 +248,12 @@ export default {
         });
       }
 
-      if (step === 3) {
+      if (this.step === 3) {
         endStepper();
       }
     },
     endStepper() {
-      console.log(newQuizz);
+      console.log(this.newQuizz);
     },
 
     toggleQuestionSelection(question) {

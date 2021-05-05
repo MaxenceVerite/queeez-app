@@ -212,9 +212,19 @@ export default {
       this.createQuestion();
       this.clearStepper();
     },
-    createQuestion() {},
+    createQuestion() {
+      let createdQuestion = {
+        id: Math.floor(Math.random() * (100 - 10 + 1)) + 10,
+        title: this.newQuestion.title,
+        category: this.newQuestion.category,
+        allowedTime: this.newQuestion.allowedTime,
+        answers: this.newQuestion.answers
+      };
+      this.$emit("completed", createdQuestion);
+    },
     clearStepper() {
       this.newQuestion = {
+        id: "",
         title: "",
         category: "",
         allowedTime: 5,

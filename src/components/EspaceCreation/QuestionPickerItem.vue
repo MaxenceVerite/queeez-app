@@ -3,7 +3,9 @@
     <q-item-section side class="choose-checkbox"
       ><q-checkbox :value="isSelected"
     /></q-item-section>
-    <q-item-section class="title">{{ question.title }}</q-item-section>
+    <q-item-section class="title">
+      <q-item-label>{{ question.title }}</q-item-label>
+    </q-item-section>
 
     <q-item-section class="question_item_isMCQ">
       <q-chip
