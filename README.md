@@ -1,6 +1,6 @@
-# Quasar Moc (quasar-moc)
+# Queeez app(quasar-queeez)
 
-A quasar framework MOC
+A quasar-made timed-quizz
 
 ## Install the dependencies
 ```bash
